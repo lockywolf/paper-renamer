@@ -3,6 +3,16 @@
 set -e
 set -u
 
+declare MY_MAX_FILENAME_LEN
+MY_MAX_FILENAME_LEN=120
+
+normalize_string() {
+    # v="hell#, world!(12)@"; v=${v// /_}; printf '%s\n' "${v//[^a-zA-Z0-9_-]}"
+    local v="$1"
+    v=${v// /_};
+    printf '%s' "${v//[^a-zA-Z0-9_-]}"
+}
+
 die() { echo "$@" 1>&2 ; exit 1; }
 
 usage() {
@@ -33,7 +43,7 @@ then
 fi
 
 # get title, note that xargs is used to trim
-title=$(pdfinfo "$pdf" | egrep '^Title' | sed 's/^Title:[[:space:]]*//g' |  head -c 60 | xargs | sed 's/[[:space:]]/-/g')
+title=$(pdfinfo "$pdf" | egrep '^Title' | sed 's/^Title:[[:space:]]*//g' |  head -c "$MY_MAX_FILENAME_LEN" | xargs | sed 's/[[:space:]]/-/g')
 die_if_empty "$title" "title"
 
 # get authors
@@ -42,9 +52,11 @@ author=$(echo "${names[0]}" | awk '{print $NF}')
 die_if_empty "$author" "author"
 
 # get year
-year=$(pdfinfo "$pdf" | egrep '^CreationDate' | awk '{print $NF}')
+#  | awk '{print $NF}')
+year=$(pdfinfo "$pdf" | egrep '^CreationDate' | cut -c 15- )
+year=$(normalize_string "$year")
 die_if_empty "$year" "year"
 
-filename="$(dirname "$pdf")/${year}_${author}_${title}.pdf"
+filename="$(dirname "$pdf")/${author}_${year}_${title}.pdf"
 mv "$pdf" "$filename"
 
