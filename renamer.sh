@@ -48,7 +48,8 @@ die_if_empty "$title" "title"
 
 # get authors
 IFS=',' read -ra names <<< "$(pdfinfo "$pdf" | egrep '^Author:[[:space:]]*' | sed 's/^Author:[[:space:]]*//g')"
-author=$(echo "${names[0]}" | awk '{print $NF}')
+#author=$(echo "${names[0]}" | awk '{print $NF}')
+author=$(normalize_string "${names[0]}")
 die_if_empty "$author" "author"
 
 # get year
@@ -58,5 +59,6 @@ year=$(normalize_string "$year")
 die_if_empty "$year" "year"
 
 filename="$(dirname "$pdf")/${author}_${year}_${title}.pdf"
+printf "Renaming $pdf into $filename\n" "$pdf" "$filename"
 mv "$pdf" "$filename"
 
